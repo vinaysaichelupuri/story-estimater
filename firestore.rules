@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is in the room
+    function isInRoom(roomId) {
+      return exists(/databases/$(database)/documents/roomUsers/$(roomId)/users/$(request.auth.uid));
+    }
+    
+    // Helper function to check if user is admin of the room
+    function isAdmin(roomId) {
+      return get(/databases/$(database)/documents/roomUsers/$(roomId)/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Rooms collection
+    match /rooms/{roomId} {
+      // Anyone authenticated can read rooms they're part of
+      allow read: if isAuthenticated() && isInRoom(roomId);
+      
+      // Anyone authenticated can create a room
+      allow create: if isAuthenticated();
+      
+      // Only admin can update room (reveal, reset, change series)
+      allow update: if isAuthenticated() && isAdmin(roomId);
+      
+      // Only admin can delete room
+      allow delete: if isAuthenticated() && isAdmin(roomId);
+    }
+    
+    // Room users collection
+    match /roomUsers/{roomId}/users/{userId} {
+      // Anyone in the room can read all users in that room
+      allow read: if isAuthenticated() && isInRoom(roomId);
+      
+      // Anyone authenticated can join a room (create their user document)
+      allow create: if isAuthenticated();
+      
+      // Users can only update their own vote
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users can delete their own user document (leave room)
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+  }
+}

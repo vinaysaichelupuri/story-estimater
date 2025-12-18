@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------- BASE ---------------- */
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  body {
+    background: #000000;
+    color: white;
+    min-height: 100vh;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ---------------- COMPONENTS ---------------- */
+@layer components {
+  /* Glassmorphism card */
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Poker card flip animation */
+  .card-flip {
+    perspective: 1000px;
+  }
+
+  .card-flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+
+  .card-flip.flipped .card-flip-inner {
+    transform: rotateY(180deg);
+  }
+
+  .card-front,
+  .card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 0.75rem;
+  }
+
+  .card-back {
+    transform: rotateY(180deg);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200;
+    background: linear-gradient(to right, #0ea5e9, #0284c7);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(to right, #0284c7, #0369a1);
+    transform: scale(1.05);
+  }
+
+  .btn-secondary {
+    @apply font-semibold py-3 px-6 rounded-lg border transition-all duration-200;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(6px);
+  }
+
+  .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+  }
+
+  .btn-danger {
+    @apply font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-200;
+    background: linear-gradient(to right, #ef4444, #dc2626);
+  }
+
+  /* Inputs */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg outline-none transition-all;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+
+  .input-field::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .input-field:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
+  }
+}
+
+/* ---------------- UTILITIES ---------------- */
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(to right, #1877f2, #4a9eff, #1877f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
