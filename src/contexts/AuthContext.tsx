@@ -51,11 +51,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signInAnonymously = async (displayName: string) => {
     try {
       const result = await firebaseSignInAnonymously(auth);
+
       localStorage.setItem("displayName", displayName);
+
+      // Immediately set user state
       setUser({
         uid: result.user.uid,
         displayName,
       });
+
+      // Wait a bit for state to propagate to all contexts
+      await new Promise((resolve) => setTimeout(resolve, 200));
     } catch (error) {
       console.error("Error signing in anonymously:", error);
       throw error;

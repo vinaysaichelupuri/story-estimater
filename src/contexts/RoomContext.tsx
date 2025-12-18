@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import {
   Room,
@@ -42,10 +43,16 @@ export const RoomProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user } = useAuth();
+  const userRef = useRef(user);
   const [room, setRoom] = useState<Room | null>(null);
   const [users, setUsers] = useState<RoomUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Keep ref in sync with user state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const currentUser = users.find((u) => u.userId === user?.uid) || null;
 
@@ -94,42 +101,68 @@ export const RoomProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const createRoom = useCallback(
     async (seriesType: SeriesType): Promise<string> => {
-      if (!user) throw new Error("User not authenticated");
+      let attempts = 0;
+      const maxAttempts = 20; // 2 seconds max
+
+      while (!userRef.current && attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      const currentUser = userRef.current;
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
 
       setLoading(true);
       setError(null);
 
       try {
         const series = getSeriesByType(seriesType);
-        const roomCode = await createRoomService(user.uid, series, seriesType);
 
-        // Join the room as admin
-        await joinRoomService(roomCode, user.uid, user.displayName, true);
+        const roomCode = await createRoomService(
+          currentUser.uid,
+          series,
+          seriesType
+        );
+        console.log(
+          "[ROOM_CONTEXT] Step 2 SUCCESS: Room created with code:",
+          roomCode
+        );
 
-        // Set the room (this will trigger subscriptions)
+        console.log("[ROOM_CONTEXT] Step 3: Joining room as admin");
+        await joinRoomService(
+          roomCode,
+          currentUser.uid,
+          currentUser.displayName,
+          true
+        );
+        console.log("[ROOM_CONTEXT] Step 3 SUCCESS: Joined room as admin");
+
+        console.log("[ROOM_CONTEXT] Step 4: Setting room state");
         setRoom({
           roomId: roomCode,
-          createdBy: user.uid,
+          createdBy: currentUser.uid,
           activeSeries: series,
           seriesType,
           isRevealed: false,
           createdAt: new Date() as any,
         });
 
-        // Save room ID to localStorage
+        console.log("[ROOM_CONTEXT] Step 5: Saving to localStorage");
         localStorage.setItem("currentRoomId", roomCode);
 
+        console.log("[ROOM_CONTEXT] ========== CREATE ROOM SUCCESS ==========");
         return roomCode;
-      } catch (err) {
-        console.error("❌ Error creating room:", err);
-        console.error("Error details:", {
-          message: err instanceof Error ? err.message : String(err),
-          code: (err as any)?.code,
-        });
-        const message =
-          err instanceof Error ? err.message : "Failed to create room";
-        setError(message);
-        throw err;
+      } catch (error) {
+        console.error(
+          "[ROOM_CONTEXT] ========== CREATE ROOM FAILED =========="
+        );
+        console.error("[ROOM_CONTEXT] Error:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to create room"
+        );
+        throw error;
       } finally {
         setLoading(false);
       }
@@ -139,7 +172,19 @@ export const RoomProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const joinRoom = useCallback(
     async (roomCode: string): Promise<void> => {
-      if (!user) throw new Error("User not authenticated");
+      // Wait for user to be available (same fix as createRoom)
+      let attempts = 0;
+      const maxAttempts = 20;
+
+      while (!userRef.current && attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      const currentUser = userRef.current;
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
 
       setLoading(true);
       setError(null);
@@ -150,7 +195,12 @@ export const RoomProvider: React.FC<{ children: React.ReactNode }> = ({
           throw new Error("Room not found");
         }
 
-        await joinRoomService(roomCode, user.uid, user.displayName, false);
+        await joinRoomService(
+          roomCode,
+          currentUser.uid,
+          currentUser.displayName,
+          false
+        );
 
         // Save room ID to localStorage
         localStorage.setItem("currentRoomId", roomCode);
@@ -173,7 +223,7 @@ export const RoomProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
       }
     },
-    [user]
+    [userRef]
   );
 
   const leaveRoom = useCallback(() => {

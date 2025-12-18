@@ -39,8 +39,7 @@ export const LandingPage = () => {
     setLoading(true);
     try {
       await signInAnonymously(displayName);
-      // Wait for auth to fully propagate (fixes first-click issue)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await createRoom("fibonacci");
       setToast({ message: "Room created successfully!", type: "success" });
     } catch (error) {
@@ -153,8 +152,17 @@ export const LandingPage = () => {
                 disabled={loading}
                 className="btn-primary w-full flex items-center justify-center gap-2"
               >
-                <Plus className="w-5 h-5" />
-                Create New Room
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating Room...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5" />
+                    Create New Room
+                  </>
+                )}
               </button>
 
               {/* Divider */}
@@ -208,8 +216,17 @@ export const LandingPage = () => {
             disabled={loading}
             className="btn-secondary w-full flex items-center justify-center gap-2"
           >
-            <LogIn className="w-5 h-5" />
-            Join Existing Room
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Joining Room...
+              </>
+            ) : (
+              <>
+                <LogIn className="w-5 h-5" />
+                Join Existing Room
+              </>
+            )}
           </button>
         </div>
 

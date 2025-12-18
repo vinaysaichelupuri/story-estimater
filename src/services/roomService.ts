@@ -37,19 +37,26 @@ export const createRoom = async (
   activeSeries: VoteValue[],
   seriesType: SeriesType
 ): Promise<string> => {
-  const roomCode = generateRoomCode();
-  const roomRef = doc(db, ROOMS_COLLECTION, roomCode);
+  try {
+    const roomCode = generateRoomCode();
 
-  const roomData: RoomDocument = {
-    createdBy: userId,
-    activeSeries,
-    seriesType,
-    isRevealed: false,
-    createdAt: serverTimestamp() as Timestamp,
-  };
+    const roomRef = doc(db, ROOMS_COLLECTION, roomCode);
 
-  await setDoc(roomRef, roomData);
-  return roomCode;
+    const roomData: RoomDocument = {
+      createdBy: userId,
+      activeSeries,
+      seriesType,
+      isRevealed: false,
+      createdAt: serverTimestamp() as Timestamp,
+    };
+
+    await setDoc(roomRef, roomData);
+
+    return roomCode;
+  } catch (error) {
+    console.error("[ROOM_SERVICE] Error:", error);  
+    throw error;
+  }
 };
 
 // Join a room
@@ -59,16 +66,31 @@ export const joinRoom = async (
   name: string,
   isAdmin: boolean
 ): Promise<void> => {
-  const userRef = doc(db, ROOM_USERS_COLLECTION, roomId, "users", userId);
+  try {
+    const userRef = doc(db, ROOM_USERS_COLLECTION, roomId, "users", userId);
+    console.log("[ROOM_SERVICE] User reference created");
 
-  const userData: RoomUserDocument = {
-    name,
-    vote: null,
-    hasVoted: false,
-    isAdmin,
-  };
+    const userData: RoomUserDocument = {
+      name,
+      vote: null,
+      hasVoted: false,
+      isAdmin,
+    };
+    await setDoc(userRef, userData);
 
-  await setDoc(userRef, userData);
+  } catch (error) {
+    console.error("[ROOM_SERVICE] Error:", error);
+
+    if (error instanceof Error) {
+      console.error("[ROOM_SERVICE] Error message:", error.message);
+    }
+
+    if (typeof error === "object" && error !== null) {
+      console.error("[ROOM_SERVICE] Error code:", (error as any).code);
+    }
+
+    throw error;
+  }
 };
 
 // Check if room exists
