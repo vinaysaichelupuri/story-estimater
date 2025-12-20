@@ -136,6 +136,15 @@ export const LandingPage = () => {
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !loading && displayName.trim()) {
+                  if (roomCode) {
+                    handleJoinRoom();
+                  } else {
+                    handleCreateRoom();
+                  }
+                }
+              }}
               placeholder="Enter your name"
               className="input-field"
               disabled={loading}
