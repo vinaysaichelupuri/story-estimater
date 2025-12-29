@@ -4,6 +4,7 @@ import { Users, Plus, LogIn, Sparkles } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRoom } from "../../contexts/RoomContext";
 import { Toast, ToastType } from "../common/Toast";
+import { VantaNetBackground } from "../common/VantaNetBackground";
 
 export const LandingPage = () => {
   const { signInAnonymously } = useAuth();
@@ -85,7 +86,9 @@ export const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Vanta.js NET Background */}
+      <VantaNetBackground />
       {toast && (
         <Toast
           message={toast.message}
